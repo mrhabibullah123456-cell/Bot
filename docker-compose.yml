@@ -1,0 +1,32 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: adb-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: advance
+      MONGO_INITDB_ROOT_PASSWORD: bot
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: adb-bot
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    working_dir: /app
+    command: ["npm", "start"]
+
+volumes:
+  mongo-data:
